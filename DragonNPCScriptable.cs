@@ -86,7 +86,27 @@ public class DragonNPCScriptable : ScriptableObject
     // Notify SaveLoadManager of changes to this dragon
     private void NotifyDragonChanged()
     {
-        SaveLoadManager.Instance.SetChanges(this, PlayerManager.instance.playerData.UnlockedDragons, nameof(PlayerManager.instance.playerData.UnlockedDragons));
+        DragonData changedDragon = PlayerManager.saveLoadManager.playerData.UnlockedDragons
+           .Find(dragon => dragon.Id == this.DragonID);
+
+        if (changedDragon != null)
+        {
+            // Update the customization data (like Hat_ID, Pet_ID, etc.) in DragonData
+            changedDragon.hatID = this.Hat_ID;
+            changedDragon.backpackID = this.BackpackID;
+            changedDragon.petID = this.PetID;
+            changedDragon.holdingID = this.HoldingID;
+            changedDragon.rideableID = this.RideableID;
+
+            // Notify SaveLoadManager to save the updated list of dragons
+            PlayerManager.saveLoadManager.SetChanges(changedDragon, PlayerManager.saveLoadManager.playerData.UnlockedDragons, nameof(PlayerManager.saveLoadManager.playerData.UnlockedDragons));
+
+            Debug.Log($"Dragon customization for {this.DragonName} has been updated.");
+        }
+        else
+        {
+            Debug.LogWarning($"Dragon with ID {this.DragonID} not found in UnlockedDragons list.");
+        }
 
     }
 }
