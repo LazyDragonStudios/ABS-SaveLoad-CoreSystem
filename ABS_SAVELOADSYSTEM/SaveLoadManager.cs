@@ -3,41 +3,24 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Unity.Services.CloudSave;
+using Unity.Services.CloudSave.Models;
 using UnityEngine;
 
 namespace ABS_SaveLoadSystem
 {
     public class SaveLoadManager
     {
+        public DragonCarePlayerData playerData;
 
-        // Static instance to hold the singleton instance
-        private static SaveLoadManager _instance;
-
-        public DragonCarePlayerData _playerData;
-
-        // Public property to access the singleton instance
-        public static SaveLoadManager Instance
+        public async Task LoadAllPlayerDataAsync()
         {
-            get
-            {
-                // Lazy initialization: create instance if it doesn't exist
-                if (_instance == null)
-                {
-                    _instance = new SaveLoadManager();  // Create new instance if it's null
-                }
-
-                return _instance;
-            }
+            // Initialize a new player data object asynchronously
+            playerData = await DragonCarePlayerData.LoadAsync();
         }
 
-        public void LoadAllPlayerData()
-        {
-            //when this object is called, the getters and setters will all call LoadPlayerData
-             _playerData = new DragonCarePlayerData();
-        }
 
         //used to check when an item that is part of an autosave
-        public void SetChanges<T>(T item, AutoSaveList<T> itemList, string propertyName) where T : class
+        public async void SetChanges<T>(T item, AutoSaveList<T> itemList, string propertyName) where T : class
         {
             try
             {
@@ -47,7 +30,7 @@ namespace ABS_SaveLoadSystem
                     if (existingItem == item)
                     {
                         // Resave the entire list
-                        SavePlayerData(itemList, propertyName);
+                        await SavePlayerData(itemList, propertyName);
                         Debug.Log($"Changes saved for {typeof(T).Name}: {item}");
                         return;
                     }
@@ -61,6 +44,7 @@ namespace ABS_SaveLoadSystem
             }
         }
 
+        
         public async Task<T> LoadPlayerData<T>(string key, T defaultValue = default)
         {
             try
@@ -69,7 +53,7 @@ namespace ABS_SaveLoadSystem
 
                 if (savedData.ContainsKey(key))
                 {
-                    var dataString = savedData[key];
+                    string dataString = savedData[key];
                     Debug.Log("Data loaded: " + dataString);
 
                     T data = JsonConvert.DeserializeObject<T>(dataString);
@@ -95,7 +79,8 @@ namespace ABS_SaveLoadSystem
                 string jsonData = JsonConvert.SerializeObject(inData);
                 var data = new Dictionary<string, object> { { key, jsonData } };
                 Debug.Log("Data saved: " + jsonData);
-                await CloudSaveService.Instance.Data.ForceSaveAsync(data);
+                await CloudSaveService.Instance.Data.Player.SaveAsync(data);
+
             }
             catch (Exception ex)
             {

@@ -3,83 +3,94 @@ using System.Collections.Generic;
 using UnityEngine;
 using ABS_SaveLoadSystem;
 using System;
+using System.Threading.Tasks;
 
 
 [System.Serializable]
 public class DragonCarePlayerData : PlayerData
 {
-    // Currencies
-    public int GoldCoins
+    // Properties with private setters
+    public int GoldCoins { get; private set; }
+    public int ProductivityPoints { get; private set; }
+    public int ProductivityMultiplier { get; private set; }
+    public DateTime ProductivityBonusExpiry { get; private set; }
+    public int EggPrice { get; private set; }
+    public int AccesoryPrice { get; private set; }
+    public DateTime LastJournalEntry { get; private set; }
+    public int JournalingStreak { get; private set; }
+    public AutoSaveList<DragonData> UnlockedDragons { get; private set; }
+    public AutoSaveList<ToDoListItem> ToDoListItems { get; private set; }
+    public AutoSaveList<AccesoryData> UnlockedAccessories { get; private set; }
+    public AutoSaveList<JournalEnty> Journal { get; private set; }
+
+    // Asynchronous factory method to load data
+    public static async Task<DragonCarePlayerData> LoadAsync()
     {
-        get => LoadData<int>(nameof(GoldCoins)).GetAwaiter().GetResult();
-        set => SaveData(value, nameof(GoldCoins));
-    }
-    public int ProductivityPoints
-    {
-        get => LoadData<int>(nameof(ProductivityPoints)).GetAwaiter().GetResult();
-        set => SaveData(value, nameof(ProductivityPoints));
-    }
-    public int ProductivityMultiplier
-    {
-        get => LoadData<int>(nameof(ProductivityMultiplier),1).GetAwaiter().GetResult();
-        set => SaveData(value, nameof(ProductivityMultiplier));
-    }
-    public DateTime ProductivityBonusExpiry
-    {
-        get => LoadData<DateTime>(nameof(ProductivityBonusExpiry), DateTime.MinValue).GetAwaiter().GetResult();
-        set => SaveData(value, nameof(ProductivityBonusExpiry));
+        var data = new DragonCarePlayerData();
+
+        // Load all properties
+        data.GoldCoins = await data.LoadData<int>(nameof(GoldCoins));
+        data.ProductivityPoints = await data.LoadData<int>(nameof(ProductivityPoints));
+        data.ProductivityMultiplier = await data.LoadData<int>(nameof(ProductivityMultiplier), 1);
+        data.ProductivityBonusExpiry = await data.LoadData<DateTime>(nameof(ProductivityBonusExpiry), DateTime.MinValue);
+        data.EggPrice = await data.LoadData<int>(nameof(EggPrice), 100);
+        data.AccesoryPrice = await data.LoadData<int>(nameof(AccesoryPrice), 100);
+        data.LastJournalEntry = await data.LoadData<DateTime>(nameof(LastJournalEntry), DateTime.MinValue);
+        data.JournalingStreak = await data.LoadData<int>(nameof(JournalingStreak));
+
+        // Initialize and load AutoSaveList properties
+        data.UnlockedDragons = await data.LoadOrCreateAutoSaveList<DragonData>(nameof(UnlockedDragons));
+        data.ToDoListItems = await data.LoadOrCreateAutoSaveList<ToDoListItem>(nameof(ToDoListItems));
+        data.UnlockedAccessories = await data.LoadOrCreateAutoSaveList<AccesoryData>(nameof(UnlockedAccessories));
+        data.Journal = await data.LoadOrCreateAutoSaveList<JournalEnty>(nameof(Journal));
+
+        return data;
     }
 
-    // Currency settings
-    public int EggPrice
+
+    // Example Specific Setter
+    public async Task SetGoldCoinsAsync(int value)
     {
-        get => LoadData<int>(nameof(EggPrice),100).GetAwaiter().GetResult();
-        set => SaveData(value, nameof(EggPrice));
+        await SetAsync(value, nameof(GoldCoins), v => GoldCoins = v);
     }
 
-    public int AccesoryPrice
+    public async Task SetProductivityPointsAsync(int value)
     {
-        get => LoadData<int>(nameof(AccesoryPrice),100).GetAwaiter().GetResult();
-        set => SaveData(value, nameof(AccesoryPrice));
+        await SetAsync(value, nameof(ProductivityPoints), v => ProductivityPoints = v);
     }
 
-    // Journaling System
-    public DateTime LastJournalEntry
+    public async Task SetProductivityMultiplierAsync(int value)
     {
-        get => LoadData<DateTime>(nameof(LastJournalEntry), DateTime.MinValue).GetAwaiter().GetResult();
-        set => SaveData(value, nameof(LastJournalEntry));
+        await SetAsync(value, nameof(ProductivityMultiplier), v => ProductivityMultiplier = v);
     }
 
-    public int JournalingStreak
+    public async Task SetProductivityBonusExpiryAsync(DateTime value)
     {
-        get => LoadData<int>(nameof(JournalingStreak)).GetAwaiter().GetResult();
-        set => SaveData(value, nameof(JournalingStreak));
+        await SetAsync(value, nameof(ProductivityBonusExpiry), v => ProductivityBonusExpiry = v);
     }
 
-    // Dragon Collection
-    // Using AutoSaveList for automatic saving when items are added or removed
-    public AutoSaveList<DragonNPCScriptable> UnlockedDragons
+    public async Task SetEggPriceAsync(int value)
     {
-        get => LoadData<AutoSaveList<DragonNPCScriptable>>(nameof(UnlockedDragons), new AutoSaveList<DragonNPCScriptable>(nameof(UnlockedDragons))).GetAwaiter().GetResult();
-        set => SaveData(value, nameof(UnlockedDragons));
+        await SetAsync(value, nameof(EggPrice), v => EggPrice = v);
     }
 
-    public AutoSaveList<ToDoListItem> ToDoListItems
+    public async Task SetAccesoryPriceAsync(int value)
     {
-        get => LoadData<AutoSaveList<ToDoListItem>>(nameof(ToDoListItems), new AutoSaveList<ToDoListItem>(nameof(ToDoListItems))).GetAwaiter().GetResult();
-        set => SaveData(value, nameof(ToDoListItems));
+        await SetAsync(value, nameof(AccesoryPrice), v => AccesoryPrice = v);
     }
-    public AutoSaveList<DragonAccesory> UnlockedAccessories
+
+    public async Task SetLastJournalEntryAsync(DateTime value)
     {
-        get => LoadData<AutoSaveList<DragonAccesory>>(nameof(UnlockedAccessories), new AutoSaveList<DragonAccesory>(nameof(UnlockedAccessories))).GetAwaiter().GetResult();
-        set => SaveData(value, nameof(UnlockedAccessories));
+        await SetAsync(value, nameof(LastJournalEntry), v => LastJournalEntry = v);
     }
-    public AutoSaveList<JournalEnty> Journal
+
+    public async Task SetJournalingStreakAsync(int value)
     {
-        get => LoadData<AutoSaveList<JournalEnty>>(nameof(Journal), new AutoSaveList<JournalEnty>(nameof(Journal))).GetAwaiter().GetResult();
-        set => SaveData(value, nameof(Journal));
+        await SetAsync(value, nameof(JournalingStreak), v => JournalingStreak = v);
     }
 }
+
+
 
 [System.Serializable]
 public class JournalEnty
@@ -88,3 +99,22 @@ public class JournalEnty
     public string Entry_Title { get; set; }
     public string Entry_Body { get; set;}
 }
+public class DragonData
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public int hatID { get; set; }
+    public int backpackID { get; set; }
+    public int holdingID { get; set; }
+    public int petID { get; set; }
+    public int rideableID { get; set; }
+}
+
+public class AccesoryData
+{
+    public int accesory_id;
+
+    public int quantityOwned;
+}
+
+

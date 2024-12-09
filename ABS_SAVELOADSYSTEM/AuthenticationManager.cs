@@ -49,7 +49,7 @@ namespace ABS_SaveLoadSystem
                 var accessToken = PlayerAccountService.Instance.AccessToken;
                 await SignInWithUnityAsync(accessToken);
 
-                Debug.Log("SignIn is successful.");
+                Debug.Log("Finished Sign in async.");
             }
             catch (Exception e)
             {
@@ -75,18 +75,26 @@ namespace ABS_SaveLoadSystem
 
 
                 //TODO MOVE TO OTHR FUNCTION
-                SaveLoadManager.Instance.LoadAllPlayerData();
+                Debug.Log("Loading Player Data");
+                await PlayerManager.saveLoadManager.LoadAllPlayerDataAsync();
+                Debug.Log("Loading Scene...");
+                var sceneLoadOperation = SceneManager.LoadSceneAsync("MainScene");
+                while (!sceneLoadOperation.isDone)
+                {
+                    Debug.Log($"Loading Progress: {sceneLoadOperation.progress * 100}%");
+                    await Task.Yield(); // Ensure the main thread remains responsive
+                }
 
-                SceneManager.LoadScene("MainScene");
+                Debug.Log("Scene Loaded Successfully.");
             }
             catch (AuthenticationException ex)
             {
-\
+
                 Debug.LogException(ex);
             }
             catch (RequestFailedException ex)
             {
-\
+
                 Debug.LogException(ex);
             }
         }

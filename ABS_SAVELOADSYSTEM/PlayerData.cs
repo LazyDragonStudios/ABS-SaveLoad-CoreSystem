@@ -22,11 +22,11 @@ namespace ABS_SaveLoadSystem
         */
 
         // Method for saving any field to the cloud
-        protected void SaveData<T>(T value, string propertyName)
+        protected async Task SaveData<T>(T value, string propertyName)
         {
-            if (PlayerManager.instance.saveLoadManager != null)
+            if (PlayerManager.saveLoadManager != null)
             {
-                PlayerManager.instance.saveLoadManager.SavePlayerData(value, propertyName);
+                await PlayerManager.saveLoadManager.SavePlayerData(value, propertyName);
             }
             else
             {
@@ -37,16 +37,30 @@ namespace ABS_SaveLoadSystem
         // Updated method for loading data asynchronously
         protected async Task<T> LoadData<T>(string propertyName, T defaultSetting = default)
         {
-            if (PlayerManager.instance.saveLoadManager != null)
+            if (PlayerManager.saveLoadManager != null)
             {
                 // Await the result from LoadPlayerData
-                return await PlayerManager.instance.saveLoadManager.LoadPlayerData<T>(propertyName);
+                return await PlayerManager.saveLoadManager.LoadPlayerData<T>(propertyName);
             }
             else
             {
                 Console.WriteLine("SaveLoadManager not found! Make sure it's in the scene.");
                 return defaultSetting;  // Return default value if the SaveLoadManager is not found
             }
+        }
+
+        // General Set Method for AutoSaveLists
+        protected async Task<AutoSaveList<T>> LoadOrCreateAutoSaveList<T>(string propertyName)
+        {
+            var list = await LoadData<AutoSaveList<T>>(propertyName);
+            return list ?? new AutoSaveList<T>();
+        }
+
+        // General Set Method for Simple Properties
+        protected async Task SetAsync<T>(T value, string key, Action<T> setAction)
+        {
+            setAction(value);
+            await SaveData(value, key);
         }
     }
 }
